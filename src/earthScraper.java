@@ -6,15 +6,24 @@ import org.jsoup.select.Elements;
 
 import java.util.*;
 import java.net.*;
+import java.awt.Desktop;
 import java.io.*;
  
 
 public class earthScraper {
 	
-	public static final String USER_AGENT = "<Your User Agent Here>";
-	private static final String folderPath = "<Your Folder Path Here>";
+	private static final String USER_AGENT = "";
+	private static String folderPath = "";
+	private static Scanner reader;
 	
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, IOException {
+		//set the path for storing files
+		
+		reader = new Scanner(System.in);
+		System.out.println("Enter path of directory for file storage: ");
+		String folderPath = reader.nextLine();
+		
+		// scrape from this page
 		String url = linkReader();
 		
 		System.out.println("");
@@ -30,26 +39,39 @@ public class earthScraper {
 		    System.out.println("Scraping from " + title);
 		    System.out.println("");
 		    
-		    // target image elements -- /r/earthPorn images are stored as href
-		    Elements imageLinks = doc.select("img");
+		    // target image elements
+		    Elements imageLinks = doc.select("a[href]");
 		    
-		    for(Element e: imageLinks){
-		    	String src = e.absUrl("src");
-			    imageToFolder(src, folderPath);
-		    }
-		} catch (IOException e) {
-			System.out.println("Error occurred!");
-		}
 		    // get the source url for each image found
+		    for(Element e: imageLinks){
+		    	String link = e.attr("href");
+			    if (isImage(link)){ 
+	                System.out.println("Link of Image: " + e.attr("href"));
+	                imageToFolder(link, folderPath);
+			    }
+		    }
+		} catch (IOException e){
+			e.printStackTrace();
+		}
+	    Desktop.getDesktop().open(new File(folderPath));
 	}
 	
 	public static String linkReader(){
 		System.out.println("Enter the website URL: ");
-		Scanner reader = new Scanner(System.in);
-		String link = reader.nextLine();
-		reader.close();
+		Scanner scan = new Scanner(System.in);
+		String link = scan.nextLine();
+		scan.close();
 		
 		return link;
+	}
+	
+	public static String pathReader(){
+		System.out.println("Enter the path for storing files: ");
+		Scanner reader = new Scanner(System.in);
+		String path = reader.nextLine();
+		reader.close();
+		
+		return path;
 	}
 	
 	// input/outputstreams to create new file in directory
@@ -58,9 +80,7 @@ public class earthScraper {
 		System.out.println("Saving: " + imageName + ", from: " + src);
 		
 		URLConnection connection = (new URL(src)).openConnection();
-
-		// decrease requests 
-		Thread.sleep(2000);
+		
 		connection.setRequestProperty("User-Agent", USER_AGENT);
 
 		InputStream input = connection.getInputStream();
@@ -74,5 +94,15 @@ public class earthScraper {
 		}
 		output.close();
 		input.close();
+	}
+	
+	// check if file is image through extensions
+	public static boolean isImage(String http){
+	    if (http.contains(".png") || http.contains("gfycat") || http.contains(".jpg") || http.contains(".jpeg") || http.contains(".gif")){
+	        return true;
+	    }
+	    else{
+	        return false;
+	    }
 	}
 }
